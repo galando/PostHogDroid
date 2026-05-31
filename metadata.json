@@ -1,0 +1,6 @@
+{
+  "name": "Quillboard",
+  "description": "Mobile dashboards for PostHog — view analytics, insights, and alerts on Android.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

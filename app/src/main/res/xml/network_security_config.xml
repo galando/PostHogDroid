@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Block all cleartext (non-TLS) HTTP traffic by default -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Uncomment to allow cleartext HTTP for a self-hosted PostHog instance:
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">my-posthog.internal.example.com</domain>
+    </domain-config>
+    -->
+</network-security-config>
