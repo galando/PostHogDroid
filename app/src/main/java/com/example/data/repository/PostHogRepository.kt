@@ -17,13 +17,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import java.util.concurrent.ConcurrentHashMap
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -137,10 +142,12 @@ class PostHogRepository(
                     postHogDao.saveSettings(defaultSettings)
                     _session.value = SessionCredentials(hostUrl, personalApiKey, projectId, isDemoMode, email)
 
-                    // Trigger the detailed, deep remote data fetching concurrently in the background
+                    // Trigger the detailed, deep remote data fetching concurrently in the background.
+                    // Use cached server results (no forced recompute) so dashboards populate fast
+                    // right after login; the user can hit Refresh for a forced recalculation.
                     repositoryScope.launch {
                         try {
-                            syncWithCredentials(sanitizedUrl, personalApiKey, projectId)
+                            syncWithCredentials(sanitizedUrl, personalApiKey, projectId, forceRefresh = false)
                         } catch (bgExc: Exception) {
                             if (BuildConfig.DEBUG) Log.e("PostHogRepository", "Background login post-sync details fetch failed", bgExc)
                         }
@@ -422,22 +429,27 @@ class PostHogRepository(
             syncWithCredentials(
                 hostUrl = activeSession.hostUrl,
                 apiKey = activeSession.personalApiKey,
-                projectId = activeSession.projectId
+                projectId = activeSession.projectId,
+                forceRefresh = forceRefresh
             )
         }
 
-    private suspend fun syncWithCredentials(hostUrl: String, apiKey: String, projectId: String) {
+    private suspend fun syncWithCredentials(hostUrl: String, apiKey: String, projectId: String, forceRefresh: Boolean = false) {
         val sanitizedUrl = if (hostUrl.endsWith("/")) hostUrl else "$hostUrl/"
         try {
             val api = PostHogClient.createService(sanitizedUrl)
             val authHeader = "Bearer $apiKey"
-            val refreshParam = "true"
-            
+            // refresh=true makes PostHog SYNCHRONOUSLY recompute every insight before responding,
+            // which is the main reason loads were slow. Only pay that cost on an explicit manual
+            // refresh; otherwise request cached server results ("false") for a fast load.
+            val refreshParam = if (forceRefresh) "true" else "false"
+
             // Get existing dashboards to preserve their pinned state
             val existingDashboards = try { postHogDao.getAllDashboardsDirect() } catch (e: Exception) { emptyList() }
             val pinnedMap = existingDashboards.associate { it.id to it.isPinned }
 
-            // 1. Fetch Dashboards
+            // 1. Fetch the (fast) dashboard list and persist immediately so the UI can render
+            //    dashboard cards right away while the heavier insight data streams in behind it.
             val dashboardsEntities = try {
                 val dashboardsResponse = api.getDashboards(
                     projectId = projectId,
@@ -463,75 +475,36 @@ class PostHogRepository(
                 emptyList()
             }
 
-            // 2. Fetch Insights (with nested tiles/items/insights results)
-            val insightsEntitiesMap = mutableMapOf<Int, InsightEntity>()
-            
-            // Query dashboard details sequentially for robust socket loading under rate limits!
-            for (dashboard in dashboardsEntities) {
-                try {
-                    val fullDashboard = api.getDashboardDetail(
-                        projectId = projectId,
-                        id = dashboard.id,
-                        authHeader = authHeader,
-                        refresh = refreshParam
-                    )
-                    
-                    // Parse insights from tiles
-                    val tilesList = fullDashboard.tiles as? List<*>
-                    tilesList?.forEach { tile ->
-                        if (tile is Map<*, *>) {
-                            val insightMap = tile["insight"] as? Map<*, *>
-                            if (insightMap != null) {
-                                val entity = parseMapToInsightEntity(insightMap, overrideDashboardId = dashboard.id)
-                                if (entity != null) {
-                                    insightsEntitiesMap[entity.id] = entity
-                                }
+            // 2. Fetch each dashboard's insights CONCURRENTLY (bounded) instead of one-by-one.
+            //    This turns the total wait from the sum of every dashboard's recompute time into
+            //    roughly the slowest single dashboard. A wall-clock budget guarantees the refresh
+            //    spinner can never hang for minutes — whatever finished in time is kept.
+            val insightsEntitiesMap = ConcurrentHashMap<Int, InsightEntity>()
+            val gate = Semaphore(SYNC_DETAIL_CONCURRENCY)
+            withTimeoutOrNull(SYNC_TIME_BUDGET_MS) {
+                coroutineScope {
+                    dashboardsEntities.map { dashboard ->
+                        async {
+                            gate.withPermit {
+                                fetchDashboardInsightsInto(
+                                    api, projectId, authHeader, dashboard, refreshParam, insightsEntitiesMap
+                                )
                             }
                         }
-                    }
-                    
-                    // Parse insights from items
-                    val itemsList = fullDashboard.items as? List<*>
-                    itemsList?.forEach { item ->
-                        if (item is Map<*, *>) {
-                            val entity = parseMapToInsightEntity(item, overrideDashboardId = dashboard.id)
-                            if (entity != null) {
-                                insightsEntitiesMap[entity.id] = entity
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    if (BuildConfig.DEBUG) Log.e("PostHogRepository", "Failed sequentially syncing dashboard details for ${dashboard.id}", e)
-                    
-                    // Fallback to fetch insights listing filtered by dashboard ID
-                    try {
-                        val response = api.getInsights(
-                            projectId = projectId,
-                            authHeader = authHeader,
-                            dashboardId = dashboard.id,
-                            refresh = refreshParam
-                        )
-                        for (insight in response.results) {
-                            try {
-                                val entity = mapRemoteInsightToEntity(insight, overrideDashboardId = dashboard.id)
-                                insightsEntitiesMap[entity.id] = entity
-                            } catch (exInside: Exception) {
-                                if (BuildConfig.DEBUG) Log.e("PostHogRepository", "Failed fallback insight parsing: ${insight.id}", exInside)
-                            }
-                        }
-                    } catch (ex: Exception) {
-                        if (BuildConfig.DEBUG) Log.e("PostHogRepository", "Fallback insights fetch also failed for dashboard: ${dashboard.id}", ex)
-                    }
+                    }.awaitAll()
                 }
             }
 
-            // 3. Also fetch general list of insights in case there are loose/non-dashboard insights
+            // 3. Also fetch general list of insights in case there are loose/non-dashboard insights.
+            //    Always request cached results here ("false"): the per-dashboard calls above already
+            //    refreshed the on-dashboard insights, so forcing a second full-project recompute was
+            //    pure wasted time.
             var generalFetchSuccess = false
             try {
                 val generalResponse = api.getInsights(
                     projectId = projectId,
                     authHeader = authHeader,
-                    refresh = refreshParam
+                    refresh = "false"
                 )
                 generalFetchSuccess = true
                 for (insight in generalResponse.results) {
@@ -588,6 +561,76 @@ class PostHogRepository(
         } catch (e: Exception) {
             if (BuildConfig.DEBUG) Log.e("PostHogRepository", "Error syncing remote PostHog data with credentials", e)
             throw e
+        }
+    }
+
+    /**
+     * Fetches a single dashboard's insights (from tiles/items, with a filtered-listing fallback)
+     * and writes them into [target]. Runs per-dashboard so calls can be parallelized safely;
+     * [target] must be a thread-safe map.
+     */
+    private suspend fun fetchDashboardInsightsInto(
+        api: com.example.data.api.PostHogApiService,
+        projectId: String,
+        authHeader: String,
+        dashboard: DashboardEntity,
+        refreshParam: String,
+        target: ConcurrentHashMap<Int, InsightEntity>
+    ) {
+        try {
+            val fullDashboard = api.getDashboardDetail(
+                projectId = projectId,
+                id = dashboard.id,
+                authHeader = authHeader,
+                refresh = refreshParam
+            )
+
+            // Parse insights from tiles
+            val tilesList = fullDashboard.tiles as? List<*>
+            tilesList?.forEach { tile ->
+                if (tile is Map<*, *>) {
+                    val insightMap = tile["insight"] as? Map<*, *>
+                    if (insightMap != null) {
+                        val entity = parseMapToInsightEntity(insightMap, overrideDashboardId = dashboard.id)
+                        if (entity != null) {
+                            target[entity.id] = entity
+                        }
+                    }
+                }
+            }
+
+            // Parse insights from items
+            val itemsList = fullDashboard.items as? List<*>
+            itemsList?.forEach { item ->
+                if (item is Map<*, *>) {
+                    val entity = parseMapToInsightEntity(item, overrideDashboardId = dashboard.id)
+                    if (entity != null) {
+                        target[entity.id] = entity
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            if (BuildConfig.DEBUG) Log.e("PostHogRepository", "Failed syncing dashboard details for ${dashboard.id}", e)
+
+            // Fallback to fetch insights listing filtered by dashboard ID
+            try {
+                val response = api.getInsights(
+                    projectId = projectId,
+                    authHeader = authHeader,
+                    dashboardId = dashboard.id,
+                    refresh = refreshParam
+                )
+                for (insight in response.results) {
+                    try {
+                        val entity = mapRemoteInsightToEntity(insight, overrideDashboardId = dashboard.id)
+                        target[entity.id] = entity
+                    } catch (exInside: Exception) {
+                        if (BuildConfig.DEBUG) Log.e("PostHogRepository", "Failed fallback insight parsing: ${insight.id}", exInside)
+                    }
+                }
+            } catch (ex: Exception) {
+                if (BuildConfig.DEBUG) Log.e("PostHogRepository", "Fallback insights fetch also failed for dashboard: ${dashboard.id}", ex)
+            }
         }
     }
 
@@ -952,4 +995,13 @@ class PostHogRepository(
 
     suspend fun clearAllNotifications() = postHogDao.clearAllNotifications()
     suspend fun markAllNotificationsAsRead() = postHogDao.markAllNotificationsAsRead()
+
+    companion object {
+        // Max number of dashboard-detail requests in flight at once. Keeps loads fast while
+        // staying gentle enough to avoid tripping PostHog's rate limits.
+        private const val SYNC_DETAIL_CONCURRENCY = 5
+        // Hard wall-clock budget for the per-dashboard insight fetch phase. Guarantees the
+        // refresh button never spins longer than this; partial results are still persisted.
+        private const val SYNC_TIME_BUDGET_MS = 25_000L
+    }
 }
