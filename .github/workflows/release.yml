@@ -24,21 +24,21 @@ jobs:
 
       - name: Decode keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/upload-key.jks
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > upload-key.jks
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build signed AAB
         env:
-          KEYSTORE_PATH: app/upload-key.jks
+          KEYSTORE_PATH: ../upload-key.jks
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew bundleRelease
 
       - name: Build signed APK
         env:
-          KEYSTORE_PATH: app/upload-key.jks
+          KEYSTORE_PATH: ../upload-key.jks
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease
@@ -53,4 +53,4 @@ jobs:
 
       - name: Cleanup keystore
         if: always()
-        run: rm -f app/upload-key.jks
+        run: rm -f upload-key.jks
