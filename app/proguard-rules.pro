@@ -19,3 +19,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Suppress warnings for compile-only annotation classes not present at runtime
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**
