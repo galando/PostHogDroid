@@ -26,7 +26,8 @@ class HogSyncWorker(
                 if (activeSession.isDemoMode) {
                     repository.refreshDemoMetrics()
                 } else {
-                    repository.syncRemoteData()
+                    // Background tick: force a recompute so cached server data stays fresh.
+                    repository.syncRemoteData(forceRefresh = true)
                 }
                 if (BuildConfig.DEBUG) Log.d("HogSyncWorker", "Background sync finished successfully.")
             } else {
