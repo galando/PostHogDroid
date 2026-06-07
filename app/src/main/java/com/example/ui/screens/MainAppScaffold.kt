@@ -141,7 +141,13 @@ fun MainAppScaffold(viewModel: PostHogViewModel) {
                     )
                     "alerts" -> AlertsScreen(viewModel = viewModel)
                     "notifications" -> NotificationsInboxScreen(viewModel = viewModel)
-                    "settings" -> SettingsScreen(viewModel = viewModel)
+                    "settings" -> SettingsScreen(
+                        viewModel = viewModel,
+                        onNavigateToAbout = { currentRoute.value = "about" }
+                    )
+                    "about" -> AboutScreen(
+                        onBack = { currentRoute.value = "settings" }
+                    )
                 }
             }
         }
