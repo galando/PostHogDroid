@@ -43,6 +43,12 @@ See [PRIVACY.md](PRIVACY.md) for the full privacy policy.
 
 Quillboard is an independent, community-built project. It is not affiliated with, endorsed by, or connected to PostHog Inc.
 
+## Author
+
+**Gal Naor** — [GitHub](https://github.com/galando) · [Buy Me a Coffee](https://buymeacoffee.com/galando)
+
+If you find Quillboard useful, consider [supporting the project](https://buymeacoffee.com/galando)!
+
 ## License
 
 MIT License. See [LICENSE](LICENSE).

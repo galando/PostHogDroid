@@ -41,4 +41,8 @@
 
 ## Contact
 
-For privacy questions, open an issue on the project repository.
+For privacy questions, open an issue on the [project repository](https://github.com/galando/PostHogDroid) or contact the author.
+
+**Author:** Gal Naor
+**Repository:** https://github.com/galando/PostHogDroid
+**Support:** https://buymeacoffee.com/galando
