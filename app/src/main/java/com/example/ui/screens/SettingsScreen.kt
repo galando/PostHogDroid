@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,7 +25,7 @@ import com.example.ui.theme.*
 import com.example.ui.viewmodel.PostHogViewModel
 
 @Composable
-fun SettingsScreen(viewModel: PostHogViewModel) {
+fun SettingsScreen(viewModel: PostHogViewModel, onNavigateToAbout: () -> Unit = {}) {
     val session by viewModel.session.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
 
@@ -121,6 +122,16 @@ fun SettingsScreen(viewModel: PostHogViewModel) {
                         }
                     }
                 }
+            }
+
+            OutlinedButton(
+                onClick = onNavigateToAbout,
+                modifier = Modifier.fillMaxWidth().height(50.dp).testTag("about_button"),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(imageVector = Icons.Default.Info, contentDescription = "About")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("About Quillboard", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
 
             Button(
