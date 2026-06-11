@@ -53,8 +53,8 @@ class MyApplication : Application() {
                 ExistingPeriodicWorkPolicy.KEEP,
                 syncRequest
             )
-        } catch (_: IllegalStateException) {
-            // WorkManager not initialized (e.g., Robolectric test environment)
+        } catch (_: Exception) {
+            // WorkManager not initialized or unavailable (e.g., Robolectric test environment)
         }
 
         // Asynchronous initialization of default settings structure
