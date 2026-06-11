@@ -162,7 +162,6 @@ fun MainAppScaffold(viewModel: PostHogViewModel) {
 @Composable
 fun BiometricGate(onUnlocked: () -> Unit) {
     val context = LocalContext.current
-    var showError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         try {
@@ -170,32 +169,19 @@ fun BiometricGate(onUnlocked: () -> Unit) {
                     BiometricManager.Authenticators.DEVICE_CREDENTIAL
             val canAuth = BiometricManager.from(context).canAuthenticate(allowedAuth)
             if (canAuth != BiometricManager.BIOMETRIC_SUCCESS) {
-                // Biometric not available, just unlock
-                onUnlocked()
-                return@LaunchedEffect
-            }
-
-            val activity = context as? FragmentActivity
-            if (activity == null) {
-                // Not a FragmentActivity, can't show biometric prompt
                 onUnlocked()
                 return@LaunchedEffect
             }
 
             val executor = ContextCompat.getMainExecutor(context)
             val prompt = BiometricPrompt(
-                activity,
+                context as androidx.fragment.app.FragmentActivity,
                 executor,
                 object : BiometricPrompt.AuthenticationCallback() {
                     override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                         onUnlocked()
                     }
                     override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                        // Any error - fail open so app stays usable
-                        onUnlocked()
-                    }
-                    override fun onAuthenticationFailed() {
-                        // Failed authentication - fail open
                         onUnlocked()
                     }
                 }
@@ -207,7 +193,6 @@ fun BiometricGate(onUnlocked: () -> Unit) {
                 .build()
             prompt.authenticate(info)
         } catch (e: Exception) {
-            // Any exception - fail open to prevent app from being unusable
             onUnlocked()
         }
     }
