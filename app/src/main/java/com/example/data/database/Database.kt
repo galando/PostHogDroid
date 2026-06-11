@@ -10,7 +10,9 @@ data class PostHogSettings(
     @PrimaryKey val id: Int = 1,
     val hostUrl: String,
     val projectId: String,
-    val useDemoMode: Boolean = true
+    val useDemoMode: Boolean = true,
+    val biometricLockEnabled: Boolean = false,
+    val lastDigestSentAt: Long = 0L
 )
 
 @Entity(tableName = "dashboards")
@@ -49,7 +51,9 @@ data class AlertEntity(
     val isTriggered: Boolean,
     val status: String, // "OK", "WARNING", "CRITICAL"
     val lastTriggeredAt: Long = 0,
-    val isMuted: Boolean = false
+    val isMuted: Boolean = false,
+    val alertType: String = "THRESHOLD",   // "THRESHOLD" or "PCT_CHANGE"
+    val pctChangeThreshold: Double = 20.0  // % magnitude that triggers PCT_CHANGE alerts
 )
 
 @Entity(tableName = "notification_logs")
@@ -143,7 +147,7 @@ interface PostHogDao {
         AlertEntity::class,
         NotificationLogEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

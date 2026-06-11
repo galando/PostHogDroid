@@ -2,19 +2,26 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// PostHog Brand Palette
-val PostHogOrange = Color(0xFFF9802A)       // Signature Orange
-val PostHogOrangeLight = Color(0xFFFFF2E6)  // Light Orange Accent
-val PostHogSand = Color(0xFFFAF8F5)         // Sand Off-White Background
-val PostHogCharcoal = Color(0xFF1B1B1D)     // Deep Dark Charcoal Black
-val PostHogDarkCard = Color(0xFF242428)     // Slightly Lighter Dark Card
-val PostHogBorder = Color(0xFFE5E4E2)       // Light border line
-val PostHogBorderDark = Color(0xFF333336)   // Dark border line
+// Quillboard Brand Palette — derived from the hedgehog logo
+val HogPurple = Color(0xFF9C3FDE)        // Primary — vivid spike purple
+val HogPurpleDeep = Color(0xFF4A1D6E)    // Deep outline purple (logo linework)
+val HogPurpleBright = Color(0xFFC685F2)  // Bright purple for dark surfaces
+val HogMagenta = Color(0xFFE0339D)       // Secondary — hot pink spikes
+val HogOrange = Color(0xFFF7941E)        // Tertiary — chart bars / hedgehog body
+val HogGold = Color(0xFFF4C04A)          // Trend arrow gold
+
+// Surfaces & structure
+val HogPurpleSoft = Color(0xFFF4E9FC)    // Light lavender accent container
+val HogMist = Color(0xFFFBF8FE)          // Lavender-tinted off-white background
+val HogInk = Color(0xFF1C1226)           // Deep plum-black background
+val HogInkCard = Color(0xFF271935)       // Slightly lighter plum card
+val HogBorder = Color(0xFFE8E0F0)        // Light border line
+val HogBorderDark = Color(0xFF3C2B50)    // Dark border line
 
 // Standard indicators
-val PostHogGreen = Color(0xFF0D9488)        // Mint/Green Success
-val PostHogRed = Color(0xFFE11D48)          // Rose/Red Alert / High Threshold
-val PostHogAmber = Color(0xFFD97706)        // Amber/Orange Alert / Warn
+val HogGreen = Color(0xFF0D9488)         // Mint/Green Success
+val HogRed = Color(0xFFE11D48)           // Rose/Red Alert / High Threshold
+val HogAmber = Color(0xFFD97706)         // Amber/Orange Alert / Warn
 
 // Charts & Visualization Colors
 val ChartBlue = Color(0xFF3B82F6)

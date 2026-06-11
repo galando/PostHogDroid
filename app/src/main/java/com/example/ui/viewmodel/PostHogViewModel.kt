@@ -36,11 +36,23 @@ class PostHogViewModel(private val repository: PostHogRepository) : ViewModel() 
     val notifications: StateFlow<List<NotificationLogEntity>> = repository.notificationLogs
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val lastSyncAt: StateFlow<Long?> = repository.lastSyncAt
+    val lastSyncError: StateFlow<String?> = repository.lastSyncError
+
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing = _isSyncing.asStateFlow()
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
+
+    // Selected date range period ("-7d", "-30d", "-90d") used when syncing
+    private val _selectedPeriod = MutableStateFlow("-7d")
+    val selectedPeriod = _selectedPeriod.asStateFlow()
+
+    fun setSelectedPeriod(period: String) {
+        _selectedPeriod.value = period
+        syncNow()
+    }
 
     fun updateSettings(hostUrl: String, apiKey: String, projectId: String, useDemoMode: Boolean) {
         viewModelScope.launch {
@@ -81,7 +93,7 @@ class PostHogViewModel(private val repository: PostHogRepository) : ViewModel() 
             _isSyncing.value = true
             _errorMessage.value = null
             try {
-                repository.syncRemoteData(forceRefresh = true)
+                repository.syncRemoteData(forceRefresh = true, dateFrom = _selectedPeriod.value)
             } catch (e: Exception) {
                 _errorMessage.value = "Sync Error: ${e.message}. Switch to Demo Mode if you are testing."
             } finally {
@@ -105,6 +117,12 @@ class PostHogViewModel(private val repository: PostHogRepository) : ViewModel() 
     fun saveAlertThreshold(insightId: Int, insightName: String, threshold: Double, isActive: Boolean) {
         viewModelScope.launch {
             repository.saveAlertThreshold(insightId, insightName, threshold, isActive)
+        }
+    }
+
+    fun setAlertType(alertId: Int, alertType: String, pctChangeThreshold: Double) {
+        viewModelScope.launch {
+            repository.updateAlertType(alertId, alertType, pctChangeThreshold)
         }
     }
 
@@ -135,6 +153,12 @@ class PostHogViewModel(private val repository: PostHogRepository) : ViewModel() 
     fun markNotificationsAsRead() {
         viewModelScope.launch {
             repository.markAllNotificationsAsRead()
+        }
+    }
+
+    fun setBiometricLock(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.saveBiometricLockEnabled(enabled)
         }
     }
 

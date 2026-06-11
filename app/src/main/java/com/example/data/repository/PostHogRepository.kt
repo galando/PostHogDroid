@@ -92,6 +92,12 @@ class PostHogRepository(
     private val _session = MutableStateFlow<SessionCredentials?>(null)
     val session: StateFlow<SessionCredentials?> = _session.asStateFlow()
 
+    private val _lastSyncAt = MutableStateFlow<Long?>(null)
+    val lastSyncAt: StateFlow<Long?> = _lastSyncAt.asStateFlow()
+
+    private val _lastSyncError = MutableStateFlow<String?>(null)
+    val lastSyncError: StateFlow<String?> = _lastSyncError.asStateFlow()
+
     val settings: Flow<PostHogSettings?> = postHogDao.getSettingsFlow()
     val dashboards: Flow<List<DashboardEntity>> = postHogDao.getAllDashboardsFlow()
     val allInsights: Flow<List<InsightEntity>> = postHogDao.getAllInsightsFlow()
@@ -361,6 +367,12 @@ class PostHogRepository(
         evaluateAlertsDirect(listOf(alert))
     }
 
+    suspend fun updateAlertType(alertId: Int, alertType: String, pctChangeThreshold: Double) {
+        val all = postHogDao.getAllAlertsDirect()
+        val match = all.find { it.id == alertId } ?: return
+        postHogDao.updateAlert(match.copy(alertType = alertType, pctChangeThreshold = pctChangeThreshold))
+    }
+
     suspend fun toggleMuteAlert(alertId: Int) {
         val all = postHogDao.getAllAlertsDirect()
         val match = all.find { it.id == alertId }
@@ -415,11 +427,13 @@ class PostHogRepository(
         }
     }
 
-    suspend fun syncRemoteData(forceRefresh: Boolean = false) =
+    suspend fun syncRemoteData(forceRefresh: Boolean = false, dateFrom: String? = null) =
         withContext(Dispatchers.IO) {
             val activeSession = _session.value ?: return@withContext
             if (activeSession.isDemoMode) {
                 refreshDemoMetrics()
+                _lastSyncAt.value = System.currentTimeMillis()
+                _lastSyncError.value = null
                 return@withContext
             }
             if (activeSession.personalApiKey.isBlank() || activeSession.projectId.isBlank()) {
@@ -430,11 +444,12 @@ class PostHogRepository(
                 hostUrl = activeSession.hostUrl,
                 apiKey = activeSession.personalApiKey,
                 projectId = activeSession.projectId,
-                forceRefresh = forceRefresh
+                forceRefresh = forceRefresh,
+                dateFrom = dateFrom
             )
         }
 
-    private suspend fun syncWithCredentials(hostUrl: String, apiKey: String, projectId: String, forceRefresh: Boolean = false) {
+    private suspend fun syncWithCredentials(hostUrl: String, apiKey: String, projectId: String, forceRefresh: Boolean = false, dateFrom: String? = null) {
         val sanitizedUrl = if (hostUrl.endsWith("/")) hostUrl else "$hostUrl/"
         try {
             val api = PostHogClient.createService(sanitizedUrl)
@@ -504,7 +519,8 @@ class PostHogRepository(
                 val generalResponse = api.getInsights(
                     projectId = projectId,
                     authHeader = authHeader,
-                    refresh = "false"
+                    refresh = "false",
+                    dateFrom = dateFrom
                 )
                 generalFetchSuccess = true
                 for (insight in generalResponse.results) {
@@ -558,7 +574,11 @@ class PostHogRepository(
             val currentAlerts = postHogDao.getAllAlertsDirect()
             evaluateAlertsDirect(currentAlerts)
 
+            _lastSyncAt.value = System.currentTimeMillis()
+            _lastSyncError.value = null
+
         } catch (e: Exception) {
+            _lastSyncError.value = e.message
             if (BuildConfig.DEBUG) Log.e("PostHogRepository", "Error syncing remote PostHog data with credentials", e)
             throw e
         }
@@ -938,8 +958,18 @@ class PostHogRepository(
             if (matchingInsight != null) {
                 val seriesList = parseRepositoryDataJson(matchingInsight.dataJson)
                 val currentMetricValue = extractMetricValue(seriesList)
-                
-                val conditionBreached = evaluateCondition(alert.condition, currentMetricValue, alert.threshold)
+
+                val conditionBreached = if (alert.alertType == "PCT_CHANGE") {
+                    val prevValue = seriesList.firstOrNull()?.data?.let { d ->
+                        if (d.size >= 2) d[d.size - 2] else null
+                    } ?: 0.0
+                    val pctChange = if (prevValue != 0.0) {
+                        ((currentMetricValue - prevValue) / prevValue) * 100.0
+                    } else 0.0
+                    kotlin.math.abs(pctChange) >= alert.pctChangeThreshold
+                } else {
+                    evaluateCondition(alert.condition, currentMetricValue, alert.threshold)
+                }
 
                 if (conditionBreached) {
                     // Alert breached! Check if it was already triggered
@@ -995,6 +1025,37 @@ class PostHogRepository(
 
     suspend fun clearAllNotifications() = postHogDao.clearAllNotifications()
     suspend fun markAllNotificationsAsRead() = postHogDao.markAllNotificationsAsRead()
+
+    suspend fun saveBiometricLockEnabled(enabled: Boolean) {
+        val settings = postHogDao.getSettingsDirect() ?: return
+        postHogDao.saveSettings(settings.copy(biometricLockEnabled = enabled))
+    }
+
+    suspend fun sendDailyDigestIfNeeded() {
+        val settings = postHogDao.getSettingsDirect() ?: return
+        val now = System.currentTimeMillis()
+        val oneDayMs = 24L * 60 * 60 * 1000
+        if ((now - settings.lastDigestSentAt) < oneDayMs) return
+
+        val allAlerts = postHogDao.getAllAlertsDirect()
+        val activeAlerts = allAlerts.filter { it.isActive }
+        if (activeAlerts.isEmpty()) return
+
+        val triggered = activeAlerts.filter { it.isTriggered }
+        val title = "Quillboard Daily Summary"
+        val body = buildString {
+            append("${activeAlerts.size} rule${if (activeAlerts.size != 1) "s" else ""} active. ")
+            if (triggered.isNotEmpty()) {
+                append("${triggered.size} BREACHED: ")
+                append(triggered.take(3).joinToString(", ") { it.insightName })
+                append(". ")
+            } else {
+                append("All within normal range.")
+            }
+        }
+        notificationHelper.showDigestNotification(title, body)
+        postHogDao.saveSettings(settings.copy(lastDigestSentAt = now))
+    }
 
     companion object {
         // Max number of dashboard-detail requests in flight at once. Keeps loads fast while

@@ -17,7 +17,6 @@ class HogSyncWorker(
         val repository = application.repository
 
         return try {
-            // Ensure default settings are loaded in case app process was killed
             repository.initDefaultSettingsAndDemoData()
 
             val activeSession = repository.getActiveSession()
@@ -26,9 +25,10 @@ class HogSyncWorker(
                 if (activeSession.isDemoMode) {
                     repository.refreshDemoMetrics()
                 } else {
-                    // Background tick: force a recompute so cached server data stays fresh.
                     repository.syncRemoteData(forceRefresh = true)
                 }
+                // Send daily digest if 24h have passed since the last one
+                repository.sendDailyDigestIfNeeded()
                 if (BuildConfig.DEBUG) Log.d("HogSyncWorker", "Background sync finished successfully.")
             } else {
                 if (BuildConfig.DEBUG) Log.d("HogSyncWorker", "No active session, skipping sync.")

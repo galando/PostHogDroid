@@ -70,17 +70,17 @@ fun parseDataJson(dataJson: String): List<ChartSeries> {
     }
 }
 
-// PostHog Theme Color Generator
+// Quillboard brand series colors — ordered to echo the logo (purple, magenta, orange, gold)
 fun getSeriesColor(index: Int): Color {
     val palette = listOf(
-        PostHogOrange,
-        ChartBlue,
+        HogPurple,
+        HogMagenta,
+        HogOrange,
         ChartTeal,
-        ChartPurple,
-        ChartPink,
+        HogGold,
         ChartIndigo,
-        PostHogGreen,
-        PostHogAmber
+        HogGreen,
+        ChartPink
     )
     return palette[index % palette.size]
 }
@@ -384,7 +384,7 @@ fun MetricMultiLineChart(
                 activeHoverIndex?.let { hIdx ->
                     val hoverX = hIdx * spacing
                     drawLine(
-                        color = PostHogOrange.copy(alpha = 0.4f),
+                        color = HogPurple.copy(alpha = 0.4f),
                         start = Offset(hoverX, padY),
                         end = Offset(hoverX, height - padY),
                         strokeWidth = 1.5.dp.toPx()
@@ -563,12 +563,12 @@ fun MetricFunnelChart(
                     modifier = Modifier
                         .size(20.dp)
                         .clip(CircleShape)
-                        .background(PostHogOrange.copy(alpha = 0.15f)),
+                        .background(HogPurple.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "${index + 1}",
-                        style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Black, color = PostHogOrange)
+                        style = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Black, color = HogPurple)
                     )
                 }
 
@@ -608,7 +608,7 @@ fun MetricFunnelChart(
                             .clip(RoundedCornerShape(6.dp))
                             .background(
                                 Brush.horizontalGradient(
-                                    colors = listOf(PostHogOrange, PostHogOrange.copy(alpha = 0.60f))
+                                    colors = listOf(HogPurple, HogMagenta)
                                 )
                             )
                     )
@@ -838,7 +838,7 @@ fun MetricTableChart(
                     )
                     Text(
                         text = if (item.value >= 1000) String.format("%,.1fK", item.value / 1000.0) else String.format("%,.1f", item.value),
-                        style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Black, color = PostHogOrange),
+                        style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Black, color = HogPurple),
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.End
                     )

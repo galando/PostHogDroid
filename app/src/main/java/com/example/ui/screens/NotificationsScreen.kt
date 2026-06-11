@@ -31,15 +31,15 @@ fun NotificationsInboxScreen(viewModel: PostHogViewModel) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column {
-                Text(text = "Alert History", style = MaterialTheme.typography.bodyMedium, color = PostHogOrange, fontWeight = FontWeight.Bold)
+                Text(text = "Alert History", style = MaterialTheme.typography.bodyMedium, color = HogPurple, fontWeight = FontWeight.Bold)
                 Text(text = "Notifications Logs", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
             }
             Row {
                 IconButton(onClick = { viewModel.markNotificationsAsRead() }, modifier = Modifier.testTag("read_all_notifications_btn")) {
-                    Icon(imageVector = Icons.Default.MarkChatRead, contentDescription = "Mark All Read", tint = PostHogOrange)
+                    Icon(imageVector = Icons.Default.MarkChatRead, contentDescription = "Mark All Read", tint = HogPurple)
                 }
                 IconButton(onClick = { viewModel.clearNotifications() }, modifier = Modifier.testTag("clear_all_notifications_btn")) {
-                    Icon(imageVector = Icons.Default.DeleteSweep, contentDescription = "Clear All Logs", tint = PostHogRed)
+                    Icon(imageVector = Icons.Default.DeleteSweep, contentDescription = "Clear All Logs", tint = HogRed)
                 }
             }
         }
@@ -58,7 +58,7 @@ fun NotificationsInboxScreen(viewModel: PostHogViewModel) {
         } else {
             LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(logs, key = { it.id }) { log ->
-                    val colorAccent = if (log.type == "CRITICAL") PostHogRed else PostHogAmber
+                    val colorAccent = if (log.type == "CRITICAL") HogRed else HogAmber
                     Card(
                         modifier = Modifier.fillMaxWidth()
                             .border(1.dp, if (log.isRead) MaterialTheme.colorScheme.outline.copy(alpha = 0.3f) else colorAccent.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
