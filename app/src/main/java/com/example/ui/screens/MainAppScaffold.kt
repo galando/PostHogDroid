@@ -173,9 +173,14 @@ fun BiometricGate(onUnlocked: () -> Unit) {
                 return@LaunchedEffect
             }
 
+            val activity = context as? FragmentActivity ?: run {
+                onUnlocked()
+                return@LaunchedEffect
+            }
+
             val executor = ContextCompat.getMainExecutor(context)
             val prompt = BiometricPrompt(
-                context as androidx.fragment.app.FragmentActivity,
+                activity,
                 executor,
                 object : BiometricPrompt.AuthenticationCallback() {
                     override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
@@ -193,6 +198,7 @@ fun BiometricGate(onUnlocked: () -> Unit) {
                 .build()
             prompt.authenticate(info)
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             onUnlocked()
         }
     }
