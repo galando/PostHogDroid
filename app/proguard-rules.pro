@@ -65,3 +65,11 @@
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
+
+# Tink (used internally by security-crypto / EncryptedSharedPreferences).
+# Tink registers key managers and primitive factories by class name at runtime;
+# R8 must not rename or remove those classes.
+-keep class com.google.crypto.tink.** { *; }
+-keepclassmembers class com.google.crypto.tink.** { *; }
+-keep class com.google.crypto.tink.shaded.protobuf.** { *; }
+-dontwarn com.google.crypto.tink.**
