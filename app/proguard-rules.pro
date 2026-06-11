@@ -23,3 +23,45 @@
 # Suppress warnings for compile-only annotation classes not present at runtime
 -dontwarn com.google.errorprone.annotations.**
 -dontwarn javax.annotation.**
+
+# Kotlin — keep metadata so reflection-based libraries (Moshi KotlinJsonAdapterFactory, etc.) work
+-keepattributes *Annotation*
+-keepattributes RuntimeVisibleAnnotations
+-keepattributes RuntimeVisibleParameterAnnotations
+-keep class kotlin.Metadata { *; }
+-keepclassmembers class **$WhenMappings { <fields>; }
+-keepclassmembers class kotlin.coroutines.SafeContinuation { *; }
+
+# Kotlin coroutines
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+-keepclassmembernames class kotlinx.** { volatile <fields>; }
+
+# Moshi — keep generated JsonAdapter classes and KotlinJsonAdapterFactory
+-keep class com.squareup.moshi.** { *; }
+-keep @com.squareup.moshi.JsonClass class * { *; }
+-keepclassmembers class * {
+    @com.squareup.moshi.FromJson *;
+    @com.squareup.moshi.ToJson *;
+}
+# Keep generated adapters produced by moshi-kotlin-codegen (JsonAdapter suffix)
+-keep class **JsonAdapter { *; }
+-keep class **JsonAdapter$* { *; }
+
+# Room — keep all entity and DAO classes
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep @androidx.room.Entity class * { *; }
+-keep @androidx.room.Dao interface * { *; }
+-keepclassmembers @androidx.room.Entity class * { *; }
+
+# WorkManager — keep Worker subclasses so they can be instantiated by name
+-keep class * extends androidx.work.Worker { *; }
+-keep class * extends androidx.work.CoroutineWorker { *; }
+-keep class * extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+
+# OkHttp / Retrofit (used transitively)
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase

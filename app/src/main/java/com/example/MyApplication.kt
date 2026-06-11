@@ -10,6 +10,7 @@ import com.example.data.HogSyncWorker
 import com.example.data.database.AppDatabase
 import com.example.data.repository.PostHogRepository
 import com.example.data.repository.SecureKeyStore
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,7 +20,10 @@ import java.util.concurrent.TimeUnit
 
 class MyApplication : Application() {
 
-    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val appScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.IO +
+            CoroutineExceptionHandler { _, _ -> /* swallow background init failures silently */ }
+    )
     val database: AppDatabase by lazy {
         Room.databaseBuilder(
             applicationContext,
