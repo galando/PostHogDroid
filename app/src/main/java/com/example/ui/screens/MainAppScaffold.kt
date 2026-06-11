@@ -91,7 +91,7 @@ fun MainAppScaffold(viewModel: PostHogViewModel) {
                                 if (item.badgeCount > 0) {
                                     BadgedBox(
                                         badge = {
-                                            Badge(containerColor = PostHogRed) {
+                                            Badge(containerColor = HogRed) {
                                                 Text(item.badgeCount.toString(), color = Color.White)
                                             }
                                         }
@@ -110,9 +110,9 @@ fun MainAppScaffold(viewModel: PostHogViewModel) {
                             },
                             label = { Text(item.label, style = MaterialTheme.typography.labelSmall) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = PostHogOrange,
-                                selectedTextColor = PostHogOrange,
-                                indicatorColor = PostHogOrangeLight
+                                selectedIconColor = HogPurple,
+                                selectedTextColor = HogPurple,
+                                indicatorColor = HogPurpleSoft
                             )
                         )
                     }

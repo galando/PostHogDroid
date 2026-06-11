@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,12 +18,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.data.database.DashboardEntity
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PostHogViewModel
@@ -61,36 +65,48 @@ fun DashboardsListScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
-                Text(
-                    text = "Quillboard",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = PostHogOrange,
-                    fontWeight = FontWeight.Bold
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_posthog_custom_logo),
+                    contentDescription = "Quillboard hedgehog logo",
+                    modifier = Modifier.size(48.dp),
+                    contentScale = ContentScale.Fit
                 )
-                Text(
-                    text = "Dashboards",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.padding(top = 2.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(PostHogGreen)
+                Column {
+                    Text(
+                        text = "Quillboard",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = HogPurple,
+                        fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Real-time stream active",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = PostHogGreen,
-                        fontWeight = FontWeight.SemiBold
+                        text = "Dashboards",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(top = 2.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(HogGreen)
+                        )
+                        Text(
+                            text = "Real-time stream active",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = HogGreen,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
 
@@ -98,13 +114,13 @@ fun DashboardsListScreen(
                 onClick = { viewModel.syncNow() },
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(PostHogOrangeLight)
+                    .background(HogPurpleSoft)
                     .testTag("dashboard_sync_button")
             ) {
                 if (isSyncing) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 3.dp, color = PostHogOrange)
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 3.dp, color = HogPurple)
                 } else {
-                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Manual Refresh", tint = PostHogOrange)
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Manual Refresh", tint = HogPurple)
                 }
             }
         }
@@ -121,8 +137,8 @@ fun DashboardsListScreen(
                 .testTag("dashboard_search_input"),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = PostHogOrange,
-                cursorColor = PostHogOrange
+                focusedBorderColor = HogPurple,
+                cursorColor = HogPurple
             )
         )
 
@@ -145,7 +161,7 @@ fun DashboardsListScreen(
                     }
                 },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = PostHogOrange,
+                    selectedContainerColor = HogPurple,
                     selectedLabelColor = Color.White,
                     selectedLeadingIconColor = Color.White
                 )
@@ -257,12 +273,12 @@ fun DashboardsListScreen(
                             .clickable { onNavigateToDetails(dashboard.id, dashboard.name) }
                             .border(
                                 1.dp,
-                                if (dashboard.isPinned) PostHogOrange.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                if (dashboard.isPinned) HogPurple.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
                                 RoundedCornerShape(12.dp)
                             )
                             .testTag("dashboard_card_${dashboard.id}"),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (dashboard.isPinned) PostHogOrangeLight.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
+                            containerColor = if (dashboard.isPinned) HogPurpleSoft.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -278,7 +294,7 @@ fun DashboardsListScreen(
                                         Icon(
                                             imageVector = Icons.Default.PushPin,
                                             contentDescription = "Pinned",
-                                            tint = PostHogOrange,
+                                            tint = HogPurple,
                                             modifier = Modifier
                                                 .size(16.dp)
                                                 .padding(end = 4.dp)
@@ -307,7 +323,7 @@ fun DashboardsListScreen(
                                 Text(
                                     text = "Click to view detailed insights",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = PostHogOrange,
+                                    color = HogPurple,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -319,7 +335,7 @@ fun DashboardsListScreen(
                                 Icon(
                                     imageVector = if (dashboard.isPinned) Icons.Default.PushPin else Icons.Outlined.PushPin,
                                     contentDescription = if (dashboard.isPinned) "Unpin Dashboard" else "Pin Dashboard",
-                                    tint = if (dashboard.isPinned) PostHogOrange else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                    tint = if (dashboard.isPinned) HogPurple else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                 )
                             }
 

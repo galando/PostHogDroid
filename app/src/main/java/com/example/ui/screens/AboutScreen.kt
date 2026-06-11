@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,11 +15,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.ui.theme.PostHogOrange
+import com.example.R
+import com.example.ui.theme.HogPurple
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,11 +56,18 @@ fun AboutScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_posthog_custom_logo),
+                contentDescription = "Quillboard hedgehog logo",
+                modifier = Modifier.size(120.dp),
+                contentScale = ContentScale.Fit
+            )
+
             Text(
                 text = "Quillboard",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Black,
-                color = PostHogOrange
+                color = HogPurple
             )
 
             Text(
@@ -126,7 +137,7 @@ fun AboutScreen(
                             )
                         },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PostHogOrange),
+                        colors = ButtonDefaults.buttonColors(containerColor = HogPurple),
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null)

@@ -84,7 +84,7 @@ fun DashboardDetailsScreen(
                 Text(
                     text = "Dashboard Metrics",
                     style = MaterialTheme.typography.bodySmall,
-                    color = PostHogOrange,
+                    color = HogPurple,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
@@ -102,13 +102,13 @@ fun DashboardDetailsScreen(
                 onClick = { viewModel.syncNow() },
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(PostHogOrangeLight)
+                    .background(HogPurpleSoft)
                     .testTag("dashboard_detail_sync_button")
             ) {
                 if (isSyncing) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 3.dp, color = PostHogOrange)
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 3.dp, color = HogPurple)
                 } else {
-                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Manual Refresh", tint = PostHogOrange)
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Manual Refresh", tint = HogPurple)
                 }
             }
         }
@@ -133,7 +133,7 @@ fun DashboardDetailsScreen(
                     onClick = { trendFilter.value = key },
                     label = { Text(display, style = MaterialTheme.typography.labelSmall) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = PostHogOrange,
+                        selectedContainerColor = HogPurple,
                         selectedLabelColor = Color.White
                     ),
                     modifier = Modifier.height(28.dp)
@@ -241,9 +241,9 @@ fun DashboardDetailsScreen(
                                 }
 
                                 Column(horizontalAlignment = Alignment.End) {
-                                    Text(text = insight.lastValueString, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = PostHogOrange)
+                                    Text(text = insight.lastValueString, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = HogPurple)
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        val trendColor = when (insight.trendDirection) { "UP" -> PostHogGreen; "DOWN" -> PostHogRed; else -> MaterialTheme.colorScheme.onSurfaceVariant }
+                                        val trendColor = when (insight.trendDirection) { "UP" -> HogGreen; "DOWN" -> HogRed; else -> MaterialTheme.colorScheme.onSurfaceVariant }
                                         val trendIcon = when (insight.trendDirection) { "UP" -> Icons.Default.TrendingUp; "DOWN" -> Icons.Default.TrendingDown; else -> Icons.Default.TrendingFlat }
                                         Icon(imageVector = trendIcon, contentDescription = "Trend direction", tint = trendColor, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(3.dp))
@@ -305,7 +305,7 @@ fun InsightFullViewDialog(insight: InsightEntity, onDismiss: () -> Unit) {
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Metric Deep Dive", style = MaterialTheme.typography.labelSmall, color = PostHogOrange, fontWeight = FontWeight.Bold)
+                        Text(text = "Metric Deep Dive", style = MaterialTheme.typography.labelSmall, color = HogPurple, fontWeight = FontWeight.Bold)
                         Text(text = insight.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
@@ -316,7 +316,7 @@ fun InsightFullViewDialog(insight: InsightEntity, onDismiss: () -> Unit) {
                     item {
                         Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(12.dp)).padding(16.dp)) {
                             Text(text = "Current State Value", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(text = insight.lastValueString, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black, color = PostHogOrange)
+                            Text(text = insight.lastValueString, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black, color = HogPurple)
                             insight.description?.let { desc -> Spacer(modifier = Modifier.height(8.dp)); Text(text = desc, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                         }
                     }
@@ -331,7 +331,7 @@ fun InsightFullViewDialog(insight: InsightEntity, onDismiss: () -> Unit) {
                                         (type == "ActionsLineGraph" && interactiveDisplayType.value.contains("Line")) ||
                                         (type == "ActionsBarValue" && interactiveDisplayType.value.contains("Bar")) ||
                                         (type == "ActionsPie" && interactiveDisplayType.value.contains("Pie"))
-                                    FilterChip(selected = isSelected, onClick = { interactiveDisplayType.value = type }, label = { Text(label) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = PostHogOrange, selectedLabelColor = Color.White))
+                                    FilterChip(selected = isSelected, onClick = { interactiveDisplayType.value = type }, label = { Text(label) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = HogPurple, selectedLabelColor = Color.White))
                                 }
                             }
                         }
@@ -370,7 +370,7 @@ fun InsightFullViewDialog(insight: InsightEntity, onDismiss: () -> Unit) {
                                             }
                                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                                 Text(label, style = MaterialTheme.typography.bodySmall)
-                                                Text(valueString, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = PostHogOrange)
+                                                Text(valueString, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = HogPurple)
                                             }
                                         }
                                     }

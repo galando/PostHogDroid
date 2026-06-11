@@ -36,7 +36,7 @@ fun AlertsScreen(viewModel: PostHogViewModel) {
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
-        Text(text = "Automated Trackers", style = MaterialTheme.typography.bodyMedium, color = PostHogOrange, fontWeight = FontWeight.Bold)
+        Text(text = "Automated Trackers", style = MaterialTheme.typography.bodyMedium, color = HogPurple, fontWeight = FontWeight.Bold)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(text = "Metric Thresholds", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
         }
@@ -73,8 +73,8 @@ fun AlertsScreen(viewModel: PostHogViewModel) {
 
                     var thresholdInputString by remember(insight.id, initialThresholdText) { mutableStateOf(initialThresholdText) }
 
-                    val cardBorderColor = if (isTriggered) PostHogRed else if (isEnabled) PostHogGreen.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    val cardBg = if (isTriggered) PostHogRed.copy(alpha = 0.04f) else if (isEnabled) PostHogGreen.copy(alpha = 0.02f) else MaterialTheme.colorScheme.surface
+                    val cardBorderColor = if (isTriggered) HogRed else if (isEnabled) HogGreen.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    val cardBg = if (isTriggered) HogRed.copy(alpha = 0.04f) else if (isEnabled) HogGreen.copy(alpha = 0.02f) else MaterialTheme.colorScheme.surface
 
                     Card(
                         modifier = Modifier.fillMaxWidth().border(1.dp, cardBorderColor, RoundedCornerShape(16.dp)).testTag("metric_alert_card_${insight.id}"),
@@ -84,7 +84,7 @@ fun AlertsScreen(viewModel: PostHogViewModel) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Column(modifier = Modifier.weight(0.7f)) {
                                     Text(text = insight.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    Text(text = "Current Value: ${insight.lastValueString}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = PostHogOrange)
+                                    Text(text = "Current Value: ${insight.lastValueString}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = HogPurple)
                                 }
                                 Switch(
                                     checked = isEnabled,
@@ -92,7 +92,7 @@ fun AlertsScreen(viewModel: PostHogViewModel) {
                                         val threshVal = thresholdInputString.toDoubleOrNull() ?: (if (parsedCurrentVal > 0) parsedCurrentVal * 1.1 else 100.0)
                                         viewModel.saveAlertThreshold(insightId = insight.id, insightName = insight.name, threshold = threshVal, isActive = checked)
                                     },
-                                    colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = PostHogOrange),
+                                    colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = HogPurple),
                                     modifier = Modifier.testTag("alert_toggle_${insight.id}")
                                 )
                             }
@@ -111,7 +111,7 @@ fun AlertsScreen(viewModel: PostHogViewModel) {
                                                     viewModel.saveAlertThreshold(insightId = insight.id, insightName = insight.name, threshold = parsedDouble, isActive = true)
                                                 }
                                             },
-                                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = PostHogOrange, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), focusedLabelColor = PostHogOrange),
+                                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = HogPurple, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), focusedLabelColor = HogPurple),
                                             textStyle = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
                                             modifier = Modifier.fillMaxWidth().height(52.dp).testTag("threshold_input_${insight.id}"),
                                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true
@@ -119,21 +119,21 @@ fun AlertsScreen(viewModel: PostHogViewModel) {
                                     }
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column(modifier = Modifier.weight(0.45f), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Box(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(if (matchingAlert.isMuted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f) else if (isTriggered) PostHogRed.copy(alpha = 0.12f) else PostHogGreen.copy(alpha = 0.12f)).padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                        Box(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(if (matchingAlert.isMuted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f) else if (isTriggered) HogRed.copy(alpha = 0.12f) else HogGreen.copy(alpha = 0.12f)).padding(horizontal = 8.dp, vertical = 4.dp)) {
                                             Text(
                                                 text = if (matchingAlert.isMuted) "MUTED" else if (isTriggered) "BREACHED" else "MONITORING",
-                                                color = if (matchingAlert.isMuted) MaterialTheme.colorScheme.onSurfaceVariant else if (isTriggered) PostHogRed else PostHogGreen,
+                                                color = if (matchingAlert.isMuted) MaterialTheme.colorScheme.onSurfaceVariant else if (isTriggered) HogRed else HogGreen,
                                                 style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold
                                             )
                                         }
                                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            TextButton(onClick = { viewModel.triggerAlertSimulation(matchingAlert.id) }, colors = ButtonDefaults.textButtonColors(contentColor = PostHogOrange), modifier = Modifier.height(32.dp).padding(horizontal = 4.dp).testTag("test_alert_btn_${insight.id}")) {
+                                            TextButton(onClick = { viewModel.triggerAlertSimulation(matchingAlert.id) }, colors = ButtonDefaults.textButtonColors(contentColor = HogPurple), modifier = Modifier.height(32.dp).padding(horizontal = 4.dp).testTag("test_alert_btn_${insight.id}")) {
                                                 Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
                                                 Spacer(modifier = Modifier.width(2.dp))
                                                 Text("Test alert", fontSize = 11.sp, fontWeight = FontWeight.Black)
                                             }
                                             IconButton(onClick = { viewModel.toggleMuteAlert(matchingAlert.id) }, modifier = Modifier.size(32.dp).testTag("mute_alert_btn_${insight.id}")) {
-                                                Icon(imageVector = if (matchingAlert.isMuted) Icons.Default.NotificationsOff else Icons.Default.NotificationsActive, contentDescription = "Mute notifications", tint = if (matchingAlert.isMuted) MaterialTheme.colorScheme.onSurfaceVariant else PostHogOrange, modifier = Modifier.size(18.dp))
+                                                Icon(imageVector = if (matchingAlert.isMuted) Icons.Default.NotificationsOff else Icons.Default.NotificationsActive, contentDescription = "Mute notifications", tint = if (matchingAlert.isMuted) MaterialTheme.colorScheme.onSurfaceVariant else HogPurple, modifier = Modifier.size(18.dp))
                                             }
                                         }
                                     }

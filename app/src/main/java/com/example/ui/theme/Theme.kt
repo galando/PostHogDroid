@@ -8,27 +8,43 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = PostHogOrange,
-    secondary = PostHogOrangeLight,
-    background = PostHogCharcoal,
-    surface = PostHogDarkCard,
-    onPrimary = Color.White,
-    onSecondary = PostHogCharcoal,
-    onBackground = PostHogSand,
-    onSurface = PostHogSand,
-    outline = PostHogBorderDark
+    primary = HogPurpleBright,
+    onPrimary = HogPurpleDeep,
+    primaryContainer = HogPurpleDeep,
+    onPrimaryContainer = HogPurpleSoft,
+    secondary = HogMagenta,
+    onSecondary = Color.White,
+    tertiary = HogOrange,
+    onTertiary = HogInk,
+    background = HogInk,
+    surface = HogInkCard,
+    surfaceVariant = HogBorderDark,
+    onSurfaceVariant = Color(0xFFCDBFDB),
+    onBackground = HogMist,
+    onSurface = HogMist,
+    outline = HogBorderDark,
+    error = HogRed,
+    onError = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = PostHogOrange,
-    secondary = PostHogCharcoal,
-    background = PostHogSand,
-    surface = Color.White,
+    primary = HogPurple,
     onPrimary = Color.White,
+    primaryContainer = HogPurpleSoft,
+    onPrimaryContainer = HogPurpleDeep,
+    secondary = HogMagenta,
     onSecondary = Color.White,
-    onBackground = PostHogCharcoal,
-    onSurface = PostHogCharcoal,
-    outline = PostHogBorder
+    tertiary = HogOrange,
+    onTertiary = Color.White,
+    background = HogMist,
+    surface = Color.White,
+    surfaceVariant = HogPurpleSoft,
+    onSurfaceVariant = Color(0xFF5E5468),
+    onBackground = HogInk,
+    onSurface = HogInk,
+    outline = HogBorder,
+    error = HogRed,
+    onError = Color.White
 )
 
 @Composable
