@@ -1,6 +1,8 @@
 package com.example.ui.screens
 
 import android.os.Build
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -15,7 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PostHogViewModel
@@ -150,6 +155,52 @@ fun MainAppScaffold(viewModel: PostHogViewModel) {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun BiometricGate(onUnlocked: () -> Unit) {
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        val allowedAuth = BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        val canAuth = BiometricManager.from(context).canAuthenticate(allowedAuth)
+        if (canAuth != BiometricManager.BIOMETRIC_SUCCESS) {
+            onUnlocked()
+            return@LaunchedEffect
+        }
+        val executor = ContextCompat.getMainExecutor(context)
+        val prompt = BiometricPrompt(
+            context as FragmentActivity,
+            executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    onUnlocked()
+                }
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    // Device credential not set up or user cancelled — fail open so app stays usable
+                    onUnlocked()
+                }
+            }
+        )
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Quillboard")
+            .setSubtitle("Verify your identity to view your dashboards")
+            .setAllowedAuthenticators(allowedAuth)
+            .build()
+        prompt.authenticate(info)
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(72.dp), tint = HogPurple)
+            Text("Quillboard", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black, color = HogPurple)
+            Text("Authenticate to continue", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

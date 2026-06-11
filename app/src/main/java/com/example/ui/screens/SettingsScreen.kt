@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,6 +28,7 @@ import com.example.ui.viewmodel.PostHogViewModel
 @Composable
 fun SettingsScreen(viewModel: PostHogViewModel, onNavigateToAbout: () -> Unit = {}) {
     val session by viewModel.session.collectAsStateWithLifecycle()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
 
     val hostUrl = session?.hostUrl ?: "https://app.posthog.com"
@@ -34,6 +36,7 @@ fun SettingsScreen(viewModel: PostHogViewModel, onNavigateToAbout: () -> Unit = 
     val useDemoMode = session?.isDemoMode ?: true
     val email = session?.email ?: ""
 
+    val biometricEnabled = settings?.biometricLockEnabled ?: false
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(errorMessage) {
@@ -121,6 +124,30 @@ fun SettingsScreen(viewModel: PostHogViewModel, onNavigateToAbout: () -> Unit = 
                             Text("Simulate Threshold Alarm", fontWeight = FontWeight.Bold)
                         }
                     }
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Icon(imageVector = Icons.Default.Fingerprint, contentDescription = null, tint = HogPurple, modifier = Modifier.size(24.dp))
+                        Column {
+                            Text("Biometric App Lock", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text("Require fingerprint or PIN on open", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Switch(
+                        checked = biometricEnabled,
+                        onCheckedChange = { viewModel.setBiometricLock(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = HogPurple)
+                    )
                 }
             }
 

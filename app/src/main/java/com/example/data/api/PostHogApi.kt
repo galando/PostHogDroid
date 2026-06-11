@@ -73,7 +73,8 @@ interface PostHogApiService {
         @Path("projectId") projectId: String,
         @Header("Authorization") authHeader: String,
         @Query("dashboard") dashboardId: Int? = null,
-        @Query("refresh") refresh: String? = "true"
+        @Query("refresh") refresh: String? = "true",
+        @Query("date_from") dateFrom: String? = null
     ): PostHogInsightsResponse
 }
 
