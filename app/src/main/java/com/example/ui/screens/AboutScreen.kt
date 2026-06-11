@@ -28,7 +28,7 @@ import com.example.ui.theme.HogPurple
 @Composable
 fun AboutScreen(
     onBack: () -> Unit,
-    versionName: String = "1.0"
+    versionName: String = com.example.BuildConfig.VERSION_NAME
 ) {
     val context = LocalContext.current
 

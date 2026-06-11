@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -171,6 +172,14 @@ fun SettingsScreen(viewModel: PostHogViewModel, onNavigateToAbout: () -> Unit = 
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Logout & Clear Memory Session", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
+
+            Text(
+                text = "Quillboard v${com.example.BuildConfig.VERSION_NAME}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp).testTag("settings_version_label"),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
