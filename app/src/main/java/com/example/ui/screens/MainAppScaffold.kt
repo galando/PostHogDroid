@@ -162,35 +162,54 @@ fun MainAppScaffold(viewModel: PostHogViewModel) {
 @Composable
 fun BiometricGate(onUnlocked: () -> Unit) {
     val context = LocalContext.current
+    var showError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        val allowedAuth = BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                BiometricManager.Authenticators.DEVICE_CREDENTIAL
-        val canAuth = BiometricManager.from(context).canAuthenticate(allowedAuth)
-        if (canAuth != BiometricManager.BIOMETRIC_SUCCESS) {
-            onUnlocked()
-            return@LaunchedEffect
-        }
-        val executor = ContextCompat.getMainExecutor(context)
-        val prompt = BiometricPrompt(
-            context as FragmentActivity,
-            executor,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    onUnlocked()
-                }
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    // Device credential not set up or user cancelled — fail open so app stays usable
-                    onUnlocked()
-                }
+        try {
+            val allowedAuth = BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            val canAuth = BiometricManager.from(context).canAuthenticate(allowedAuth)
+            if (canAuth != BiometricManager.BIOMETRIC_SUCCESS) {
+                // Biometric not available, just unlock
+                onUnlocked()
+                return@LaunchedEffect
             }
-        )
-        val info = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Quillboard")
-            .setSubtitle("Verify your identity to view your dashboards")
-            .setAllowedAuthenticators(allowedAuth)
-            .build()
-        prompt.authenticate(info)
+
+            val activity = context as? FragmentActivity
+            if (activity == null) {
+                // Not a FragmentActivity, can't show biometric prompt
+                onUnlocked()
+                return@LaunchedEffect
+            }
+
+            val executor = ContextCompat.getMainExecutor(context)
+            val prompt = BiometricPrompt(
+                activity,
+                executor,
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        onUnlocked()
+                    }
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        // Any error - fail open so app stays usable
+                        onUnlocked()
+                    }
+                    override fun onAuthenticationFailed() {
+                        // Failed authentication - fail open
+                        onUnlocked()
+                    }
+                }
+            )
+            val info = BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Quillboard")
+                .setSubtitle("Verify your identity to view your dashboards")
+                .setAllowedAuthenticators(allowedAuth)
+                .build()
+            prompt.authenticate(info)
+        } catch (e: Exception) {
+            // Any exception - fail open to prevent app from being unusable
+            onUnlocked()
+        }
     }
 
     Box(
