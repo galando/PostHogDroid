@@ -129,17 +129,6 @@ fun DashboardsListScreen(
                         }
                     }
                 }
-
-                IconButton(
-                    onClick = { viewModel.syncNow() },
-                    modifier = Modifier.clip(CircleShape).background(HogPurpleSoft).testTag("dashboard_sync_button")
-                ) {
-                    if (isSyncing) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 3.dp, color = HogPurple)
-                    } else {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Manual Refresh", tint = HogPurple)
-                    }
-                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))

@@ -248,6 +248,10 @@ class PostHogRepository(
         } else {
             // Read API key from encrypted storage (not Room)
             val encryptedKey = secureKeyStore.readApiKey()
+            if (BuildConfig.DEBUG) {
+                Log.d("PostHogRepository", "Session restore check - encryptedKey is blank: ${encryptedKey.isBlank()}, projectId is blank: ${settingsToUse.projectId.isNotBlank()}")
+                Log.d("PostHogRepository", "Session restore - hostUrl: ${settingsToUse.hostUrl}, projectId: ${settingsToUse.projectId}")
+            }
             if (encryptedKey.isNotBlank() && settingsToUse.projectId.isNotBlank()) {
                 _session.value = SessionCredentials(
                     hostUrl = settingsToUse.hostUrl,
