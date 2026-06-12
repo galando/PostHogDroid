@@ -28,7 +28,9 @@ class SecureKeyStore(context: Context) {
 
     fun saveApiKey(key: String): Boolean {
         return try {
-            prefs?.edit()?.putString(KEY_API_KEY, key)?.apply() ?: false
+            val editor = prefs?.edit() ?: return false
+            editor.putString(KEY_API_KEY, key)
+            editor.commit()
         } catch (e: Exception) {
             if (BuildConfig.DEBUG) Log.e("SecureKeyStore", "Failed to save API key", e)
             false
