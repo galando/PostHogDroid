@@ -225,8 +225,8 @@ class PostHogRepository(
         }
 
         val settingsToUse = if (current != null) {
-            // Already set up before. Keep and respect their configuration, but ensure biometric is false
-            current.copy(biometricLockEnabled = false)
+            // Already set up before. Keep and respect their configuration entirely.
+            current
         } else {
             // Initialize for the first time
             PostHogSettings(
@@ -344,7 +344,12 @@ class PostHogRepository(
             secureKeyStore.saveApiKey(updatedApiKey)
         }
 
-        val settings = PostHogSettings(1, hostUrl, projectId, useDemoMode)
+        val current = postHogDao.getSettingsDirect()
+        val settings = if (current != null) {
+            current.copy(hostUrl = hostUrl, projectId = projectId, useDemoMode = useDemoMode)
+        } else {
+            PostHogSettings(1, hostUrl, projectId, useDemoMode)
+        }
         postHogDao.saveSettings(settings)
         if (BuildConfig.DEBUG) Log.d("PostHogRepository", "Updated settings: useDemoMode = $useDemoMode")
         if (useDemoMode) {
