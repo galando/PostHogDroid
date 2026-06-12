@@ -136,14 +136,18 @@ class PostHogRepository(
                     postHogDao.clearAlerts()
 
                     // Save API key to encrypted storage (not Room)
-                    secureKeyStore.saveApiKey(personalApiKey)
+                    val saved = secureKeyStore.saveApiKey(personalApiKey)
+                    if (!saved) {
+                        if (BuildConfig.DEBUG) Log.e("PostHogRepository", "Failed to save API key to SecureKeyStore - prefs may be null")
+                    }
 
                     // Save settings (without API key) & update memory session immediately
                     val defaultSettings = PostHogSettings(
                         id = 1,
                         hostUrl = hostUrl,
                         projectId = projectId,
-                        useDemoMode = isDemoMode
+                        useDemoMode = isDemoMode,
+                        biometricLockEnabled = false
                     )
                     postHogDao.saveSettings(defaultSettings)
                     _session.value = SessionCredentials(hostUrl, personalApiKey, projectId, isDemoMode, email)
@@ -194,7 +198,8 @@ class PostHogRepository(
             id = 1,
             hostUrl = "https://app.posthog.com",
             projectId = "",
-            useDemoMode = false
+            useDemoMode = false,
+            biometricLockEnabled = false
         )
         postHogDao.saveSettings(defaultSettings)
     }
@@ -220,15 +225,16 @@ class PostHogRepository(
         }
 
         val settingsToUse = if (current != null) {
-            // Already set up before. Keep and respect their configuration
-            current
+            // Already set up before. Keep and respect their configuration, but ensure biometric is false
+            current.copy(biometricLockEnabled = false)
         } else {
             // Initialize for the first time
             PostHogSettings(
                 id = 1,
                 hostUrl = envHost,
                 projectId = envProjectId,
-                useDemoMode = false
+                useDemoMode = false,
+                biometricLockEnabled = false
             )
         }
 
