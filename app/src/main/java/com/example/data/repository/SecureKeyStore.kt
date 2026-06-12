@@ -2,49 +2,78 @@ package com.example.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import com.example.BuildConfig
 
 class SecureKeyStore(context: Context) {
 
-    // EncryptedSharedPreferences (backed by Tink) can fail in release builds when R8 strips
-    // Tink's reflection-registered key managers, or after keystore state changes (backup/restore,
-    // key invalidation).  Fall back to null so construction never throws — callers treat a blank
-    // key as "not logged in" and prompt for credentials rather than crashing.
-    private val prefs: SharedPreferences? = runCatching {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        EncryptedSharedPreferences.create(
-            context,
-            "secure_posthog_keys",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    // Primary: EncryptedSharedPreferences for secure storage
+    // Fallback: Regular SharedPreferences if encrypted fails (better than losing data)
+    private val encryptedPrefs: SharedPreferences?
+    private val fallbackPrefs: SharedPreferences
+
+    init {
+        // Try to initialize encrypted prefs
+        encryptedPrefs = try {
+            val masterKey = MasterKey.Builder(context.applicationContext)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            EncryptedSharedPreferences.create(
+                context.applicationContext,
+                "secure_posthog_keys",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            null
+        }
+
+        // Fallback to regular prefs (better than losing data)
+        // NOTE: Not encrypted in this case, but at least persists
+        fallbackPrefs = context.applicationContext.getSharedPreferences(
+            "posthog_keys_fallback",
+            Context.MODE_PRIVATE
         )
-    }.getOrNull()
+    }
 
     fun saveApiKey(key: String): Boolean {
         return try {
-            val editor = prefs?.edit() ?: return false
-            editor.putString(KEY_API_KEY, key)
-            editor.commit()
+            if (encryptedPrefs != null) {
+                val editor = encryptedPrefs.edit()
+                editor.putString(KEY_API_KEY, key)
+                editor.commit()
+            } else {
+                // Fall back to regular prefs
+                val editor = fallbackPrefs.edit()
+                editor.putString(KEY_API_KEY, key)
+                editor.commit()
+            }
+            true
         } catch (e: Exception) {
-            if (BuildConfig.DEBUG) Log.e("SecureKeyStore", "Failed to save API key", e)
             false
         }
     }
 
-    fun readApiKey(): String = prefs?.getString(KEY_API_KEY, "") ?: ""
+    fun readApiKey(): String {
+        return try {
+            // Try encrypted prefs first
+            encryptedPrefs?.getString(KEY_API_KEY, "")
+                // Fall back to regular prefs
+                ?: fallbackPrefs.getString(KEY_API_KEY, "")
+                ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
 
     fun clear() {
         try {
-            prefs?.edit()?.clear()?.apply()
-        } catch (e: Exception) {
-            if (BuildConfig.DEBUG) Log.e("SecureKeyStore", "Failed to clear secure store", e)
-        }
+            encryptedPrefs?.edit()?.clear()?.commit()
+        } catch (_: Exception) {}
+        try {
+            fallbackPrefs.edit().clear().commit()
+        } catch (_: Exception) {}
     }
 
     companion object {
