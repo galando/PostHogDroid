@@ -2,8 +2,10 @@ package com.example.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.example.BuildConfig
 
 class SecureKeyStore(context: Context) {
 
@@ -24,14 +26,23 @@ class SecureKeyStore(context: Context) {
         )
     }.getOrNull()
 
-    fun saveApiKey(key: String) {
-        prefs?.edit()?.putString(KEY_API_KEY, key)?.apply()
+    fun saveApiKey(key: String): Boolean {
+        return try {
+            prefs?.edit()?.putString(KEY_API_KEY, key)?.apply() ?: false
+        } catch (e: Exception) {
+            if (BuildConfig.DEBUG) Log.e("SecureKeyStore", "Failed to save API key", e)
+            false
+        }
     }
 
     fun readApiKey(): String = prefs?.getString(KEY_API_KEY, "") ?: ""
 
     fun clear() {
-        prefs?.edit()?.clear()?.apply()
+        try {
+            prefs?.edit()?.clear()?.apply()
+        } catch (e: Exception) {
+            if (BuildConfig.DEBUG) Log.e("SecureKeyStore", "Failed to clear secure store", e)
+        }
     }
 
     companion object {
