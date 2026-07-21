@@ -28,7 +28,7 @@ Mobile dashboards for PostHog -- view your analytics dashboards, insights, and a
 - **No telemetry**: No analytics, crash reporting, or third-party tracking.
 - **Open source**: MIT licensed, reproducible builds.
 
-See [PRIVACY.md](PRIVACY.md) for the full privacy policy.
+See [PRIVACY.md](PRIVACY.md) for the full privacy policy, and [RELEASING.md](RELEASING.md) for how releases are built and published to Google Play.
 
 ## Creating a PostHog API Key
 
